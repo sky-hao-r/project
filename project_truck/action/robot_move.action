@@ -1,0 +1,14 @@
+# Define the goal
+float64 robot_target_x 
+float64 robot_target_y
+float64 robot_target_yaw
+---
+# Define the result
+float64 robot_final_x
+float64 robot_final_y
+float64 robot_final_yaw
+---
+# Define a feedback message
+float64 present_robot_x
+float64 present_robot_y
+float64 present_robot_yaw
