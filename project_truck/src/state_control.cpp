@@ -6,8 +6,9 @@
 
 namespace State_Control
 {
-        StateControl::StateControl() :
+        StateControl::StateControl() : 
         robot_type(false),
+        // robot_type(true),
         Robot_State(StateValue::Idle),  // 车的状态
         Run_State(RunStateValue::Goto), // 车的运行状态
         current_point(),
@@ -68,7 +69,7 @@ namespace State_Control
                         ROS_INFO("Robot_State: %d", static_cast<int>(Robot_State));
                         // ROS_INFO("Robot_1_Pose: %f, %f, %f", robot_1_pose.x, robot_1_pose.y, robot_1_pose.yaw);
                         // ROS_INFO("Robot_2_Pose: %f, %f, %f", robot_2_pose.x, robot_2_pose.y, robot_2_pose.yaw);
-
+                        StateControl::Visual_Path(path_vector);
                         switch (Robot_State)
                         {
                         case StateValue::Idle:
@@ -84,10 +85,8 @@ namespace State_Control
 
                                 break;
                         case StateValue::Run:
-                                StateControl::Visual_Path(path_vector);
                                 Running_State();
                                 break;  
-
 
                         default:
                                 ROS_ERROR("Error StateValue!");
@@ -104,22 +103,22 @@ namespace State_Control
                 {
                 case RunStateValue::Goto:
                 {
+                        ROS_INFO("Goto");
                         Goto_Goal(path_vector);
                         break;
                 }
 
                 case RunStateValue::Tracking:
+                        ROS_INFO("Tracking");
                         Tracking_Path();
                         break;
 
                 case RunStateValue::Follow:
                         ROS_INFO("Follow");
-
                         break;
 
                 case RunStateValue::Wait:
                         ROS_INFO("Wait");
-
                         break;
 
                 default:
@@ -155,23 +154,41 @@ namespace State_Control
                 double target_x = path_point[0].first.first;
                 double target_y = path_point[0].first.second;
                 double target_yaw = path_point[0].second;
-                ros::Rate rate(100);
+                // ros::Rate rate(100);
 
                 ros::spinOnce();
                 ROS_INFO("Goto_Goal: %f, %f, %f", target_x, target_y, target_yaw);
                 ROS_INFO("Robot_Pose: %f, %f, %f", robot_pose.x, robot_pose.y, robot_pose.yaw);
 
-                double angle_to_goal = atan2(target_y - robot_pose.y, target_x - robot_pose.x);
                 double distance = sqrt(pow(target_x - robot_pose.x, 2) + pow(target_y - robot_pose.y, 2));
                 ROS_INFO("distance: %f", distance);
-
-                geometry_msgs::Twist vel_msg;
-                vel_msg.angular.z = 0.4 * (angle_to_goal - robot_pose.yaw);
-                vel_msg.linear.x = goal_speed;
-
-                vel_pub_.publish(vel_msg);
-                if (distance < 0.05)
+                if (distance >= 0.05)
                 {
+                        if (robot_type)
+                        {
+                                double angle_to_goal = atan2(target_x - robot_pose.x, target_y - robot_pose.y);
+
+                                yhs_can_msgs::ctrl_cmd vel_msg;
+                                vel_msg.ctrl_cmd_gear = 06;
+                                vel_msg.ctrl_cmd_x_linear = goal_speed;
+                                vel_msg.ctrl_cmd_y_linear = 0;
+                                vel_msg.ctrl_cmd_z_angular = kd_g * (angle_to_goal - robot_pose.yaw) * 180 / M_PI;
+                                vel_pub_.publish(vel_msg);
+                        }
+                        else
+                        {
+                                double angle_to_goal = atan2(target_y - robot_pose.y, target_x - robot_pose.x);
+
+                                geometry_msgs::Twist vel_msg;
+                                vel_msg.angular.z = 1 * (angle_to_goal - robot_pose.yaw);
+                                vel_msg.linear.x = 0.5;
+
+                                vel_pub_.publish(vel_msg);
+                        }
+                }
+                else
+                {
+                        ROS_INFO("yaw_err: %f", std::abs(target_yaw - robot_pose.yaw));
                         if (std::abs(target_yaw - robot_pose.yaw )> 0.05)
                         {
                                 if (robot_type)
@@ -180,7 +197,7 @@ namespace State_Control
                                         vel_msg.ctrl_cmd_gear = 06;
                                         vel_msg.ctrl_cmd_x_linear = 0.0;
                                         vel_msg.ctrl_cmd_y_linear = 0;
-                                        vel_msg.ctrl_cmd_z_angular = 0.1*180/M_PI;
+                                        vel_msg.ctrl_cmd_z_angular = -0.1*180/M_PI;
                                         vel_pub_.publish(vel_msg);
                                 }
                                 else
@@ -189,9 +206,7 @@ namespace State_Control
                                         vel_msg.angular.z =0.5;
                                         vel_msg.linear.x = 0.0;
                                         vel_pub_.publish(vel_msg);
-                                        ROS_INFO("yaw_err: %f",std::abs(target_yaw - robot_pose.yaw));
                                 }
-                                
                         }
                         else
                         {
@@ -211,14 +226,13 @@ namespace State_Control
                                         vel_msg.linear.x = 0.0;
                                         vel_pub_.publish(vel_msg);
                                 }
-                                ROS_INFO("yaw_err: %f", std::abs(target_yaw - robot_pose.yaw));
-                                ROS_INFO("goto goal success");
 
+                                ROS_INFO("goto goal success");
                                 Run_State = RunStateValue::Tracking;
                         }
 
                 }
-                rate.sleep();
+                // rate.sleep();
         }
         void StateControl::Tracking_Path()
         {
@@ -234,19 +248,35 @@ namespace State_Control
                 if (current_index == path_vector.size() - 1)
                 {
                         ROS_INFO("Reached the last point. Stopping the robot.");
-                        Stop();
+                        Run_State = RunStateValue::Follow;
                 }
+
                 double e_y = Get_Distance(current_point, goal_point);
-                // a method for calculating positive and negative of delta_e
-                e_y = ((current_point.first.second - goal_point.first.second) *
-                           cos(goal_point.second) -
-                       (current_point.first.first - goal_point.first.first) *
-                           sin(goal_point.second)) <= 0
-                          ? e_y
-                          : -e_y;
-                double theta_e = goal_point.second - current_point.second;
-                double delta_e = atan2(kp * e_y, truck_speed);
-                double delta = delta_e + theta_e;
+                double delta = 0.0;
+                if (robot_type)
+                {
+                        e_y = ((current_point.first.second - goal_point.first.second) *
+                                   sin(goal_point.second) -
+                               (current_point.first.first - goal_point.first.first) *
+                                   cos(goal_point.second)) <= 0
+                                  ? e_y
+                                  : -e_y;
+                        double theta_e = goal_point.second - current_point.second;
+                        double delta_e = atan2(kp * e_y, truck_speed);
+                        delta = delta_e + theta_e;
+                }
+                else
+                {
+                        e_y = ((current_point.first.second - goal_point.first.second) *
+                                   cos(goal_point.second) -
+                               (current_point.first.first - goal_point.first.first) *
+                                   sin(goal_point.second)) <= 0
+                                  ? e_y
+                                  : -e_y;
+                        double theta_e = goal_point.second - current_point.second;
+                        double delta_e = atan2(kp * e_y, truck_speed);
+                        delta = delta_e + theta_e;
+                }
 
                 if (delta > M_PI)
                 {
@@ -270,16 +300,17 @@ namespace State_Control
                 }
                 else
                 {
+                        ROS_INFO("delta: %f", delta);
                         geometry_msgs::Twist vel_msg;
-                        vel_msg.linear.x = truck_speed;
+                        vel_msg.linear.x = 0.1;
                         vel_msg.angular.z = delta;
                         if (odom_callback_flag)
                         {
                                 vel_pub_.publish(vel_msg);
                         }
                 }
-        }
 
+        }
 
         Path_Type StateControl::ReadFile(const std::string &filePath)
         {
@@ -422,7 +453,7 @@ namespace State_Control
                 odom_callback_flag = true;
                 robot_pose.x = msg->pose.position.x;
                 robot_pose.y = msg->pose.position.y;
-                robot_pose.yaw = msg->pose.orientation.z;
+                robot_pose.yaw = - msg->pose.orientation.z;
         }
 
         bool StateControl::task_srv(project_truck::hmh_task::Request &req, project_truck::hmh_task::Response &resp)

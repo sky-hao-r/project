@@ -77,6 +77,8 @@ namespace State_Control
                         double kp = 1;
                         double truck_speed = 0.1;
                         double goal_speed=0.3;
+                        double kd_g = 0.4;
+
                 public:
                         StateControl();  // 构造函数，用于初始化状态机
                         ~StateControl(); // 析构函数，用于释放资源
