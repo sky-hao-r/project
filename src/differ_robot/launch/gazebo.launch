@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+<!-- 1.5707963 -->
+        <arg name="robot_x_pos" default="35.0"/>
+        <arg name="robot_y_pos" default="-15.0"/>
+        <arg name="robot_z_pos" default="0.0"/>
+        <arg name="robot_yaw" default="$(eval 3.1415926/2)"/>
+
+        <include file="$(find gazebo_ros)/launch/empty_world.launch" >
+                <arg name="paused" value="false"/>
+                <arg name="use_sim_time" value="true"/>
+                <arg name="gui" value="true"/>
+                <arg name="headless" value="false"/>
+                <arg name="debug" value="false"/>
+        </include>
+
+        <param name="robot_description" command="$(find xacro)/xacro $(find differ_robot)/urdf/robot.urdf.xacro" />
+        <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot_car -x $(arg robot_x_pos) -y $(arg robot_y_pos) -z $(arg robot_z_pos) -R 0 -P 0 -Y $(arg robot_yaw)" output="screen"/>
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+                <param name="publish_frequency" type="double" value="100.0" />
+                <param name="publish_tf" type="bool" value="false" />
+        </node>
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+        <!-- <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="$(arg robot_x_pos) $(arg robot_y_pos) $(arg robot_z_pos) $(arg robot_yaw) 0 0 /world /odom" /> -->
+        <node name="transform" pkg="differ_robot" type="transform" output="screen"/>
+        
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find differ_robot)/rviz/rviz.rviz" />
+        
+</launch>

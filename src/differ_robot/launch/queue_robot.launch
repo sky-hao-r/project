@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+        <arg name="robot1_x_pos" default="35.0"/>
+        <arg name="robot1_y_pos" default="-15.0"/>
+        <arg name="robot1_z_pos" default="0.0"/>
+        <arg name="robot1_yaw" default="$(eval 3.1415926/2)"/>
+
+        <arg name="robot2_x_pos" default="35.0"/>
+        <arg name="robot2_y_pos" default="-20.0"/>
+        <arg name="robot2_z_pos" default="0.0"/>
+        <arg name="robot2_yaw" default="$(eval 3.1415926/2)"/>
+
+
+        <include file="$(find gazebo_ros)/launch/empty_world.launch" >
+                <arg name="paused" value="false"/>
+                <arg name="use_sim_time" value="true"/>
+                <arg name="gui" value="true"/>
+                <arg name="headless" value="false"/>
+                <arg name="debug" value="false"/>
+        </include>
+
+        <group ns="robot1">
+                <param name="robot_description" command="$(find xacro)/xacro $(find differ_robot)/urdf/robot_queue.urdf.xacro ns:=robot1" />
+                <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot1 -x $(arg robot1_x_pos) -y $(arg robot1_y_pos) -z $(arg robot1_z_pos) -R 0 -P 0 -Y $(arg robot1_yaw)" output="screen"/>
+                <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+                        <param name="publish_tf" type="bool" value="false" />
+                </node>
+                <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+                <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot1_odom" />
+                <node name="transform" pkg="differ_robot" type="transform" output="screen"/>
+        </group>
+
+        <group ns="robot2">
+                <param name="robot_description" command="$(find xacro)/xacro $(find differ_robot)/urdf/robot_queue.urdf.xacro ns:=robot2" />
+                <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot2 -x $(arg robot2_x_pos) -y $(arg robot2_y_pos) -z $(arg robot2_z_pos) -R 0 -P 0 -Y $(arg robot2_yaw)" output="screen"/>
+                <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+                        <param name="publish_tf" type="bool" value="false" />
+                </node>
+                <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+                <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot2_odom" />
+                <node name="transform" pkg="differ_robot" type="transform" output="screen"/>
+        </group>
+
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find differ_robot)/rviz/queue.rviz" />
+        
+</launch>
