@@ -1,0 +1,31 @@
+1.配置caotographer环境
+	选用鱼香一键安装，中途失败重新编译即可
+	mkdir build
+	cd build
+ 
+	cmake ..
+ 
+	make -j16（kenengshi）
+ 
+	sudo make install
+
+2.配置黄车环境
+	按照要求sudo apt-get install
+
+3.实验
+	source /opt/ros/noetic/setup.bash
+	catkin build
+	首先给予权限：
+	(新终端) ls /dev/input/by-path/ 找到自己键盘对应的地址，修改键盘控制文件
+	ls -l /dev |grep ttyUSB 显示usb的序号分别进行授权
+	sudo chmod 777 /dev/ttyUSB0  （一般是0-2）
+	sudo chmod 777 /dev/input/by-path/pci-0000:00:14.0-usb-0:6.4:1.0-event-kbd
+	然后 source ./devel/setup.bash
+	运行roslaunch autolabor_navigation_launch second_generation_mapping.launch 
+	会出现键盘报错，复制路径
+	sudo chmod 777 复制的路径
+	再次运行即可，利用方向键可以控制车运动对地图建模
+	对于保存地图，新建终端，进入到工作空间
+	打印坐标关系：rosrun tf tf_echo /map /base_link
+	
+	

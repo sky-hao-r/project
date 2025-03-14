@@ -14,7 +14,7 @@ public:
         OdomToPoseRPY()
         {
                 // 初始化订阅者和发布者
-                odom_sub = nh.subscribe("odom", 10, &OdomToPoseRPY::odomCallback, this);
+                odom_sub = nh.subscribe("/robot1/odom", 10, &OdomToPoseRPY::odomCallback, this);
                 pub = nh.advertise<differ_robot::PoseRPY>("pose_rpy", 10);
         }
 

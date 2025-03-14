@@ -1,20 +1,35 @@
 <?xml version="1.0"?>
 <launch>
-        <arg name="robot1_x_pos" default="35.0"/>
-        <arg name="robot1_y_pos" default="-15.0"/>
+        <arg name="gui" default="true"/>
+        <arg name="robot1_x_pos" default="-50.0"/>
+        <arg name="robot1_y_pos" default="-4.0"/>
         <arg name="robot1_z_pos" default="0.0"/>
-        <arg name="robot1_yaw" default="$(eval 3.1415926/2)"/>
+        <arg name="robot1_yaw" default="$(eval (90-69.0707)/180.0*3.1415926)"/>
 
-        <arg name="robot2_x_pos" default="35.0"/>
-        <arg name="robot2_y_pos" default="-20.0"/>
+        <arg name="robot2_x_pos" default="-52.0"/>
+        <arg name="robot2_y_pos" default="-4.7"/>
         <arg name="robot2_z_pos" default="0.0"/>
-        <arg name="robot2_yaw" default="$(eval 3.1415926/2)"/>
+        <arg name="robot2_yaw" default="$(eval (90-69.0707)/180.0*3.1415926)"/>
 
+        <arg name="robot3_x_pos" default="-54.0"/>
+        <arg name="robot3_y_pos" default="-5.4"/>
+        <arg name="robot3_z_pos" default="0.0"/>
+        <arg name="robot3_yaw" default="$(eval (90-69.0707)/180.0*3.1415926)"/>
+
+        <arg name="robot4_x_pos" default="-56.0"/>
+        <arg name="robot4_y_pos" default="-6.1"/>
+        <arg name="robot4_z_pos" default="0.0"/>
+        <arg name="robot4_yaw" default="$(eval (90-69.0707)/180.0*3.1415926)"/>
+
+        <arg name="robot5_x_pos" default="-58.0"/>
+        <arg name="robot5_y_pos" default="-6.8"/>
+        <arg name="robot5_z_pos" default="0.0"/>
+        <arg name="robot5_yaw" default="$(eval (90-69.0707)/180.0*3.1415926)"/>
 
         <include file="$(find gazebo_ros)/launch/empty_world.launch" >
                 <arg name="paused" value="false"/>
                 <arg name="use_sim_time" value="true"/>
-                <arg name="gui" value="true"/>
+                <arg name="gui" value="$(arg gui)"/>
                 <arg name="headless" value="false"/>
                 <arg name="debug" value="false"/>
         </include>
@@ -28,7 +43,7 @@
                 <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
                 <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot1_odom" />
-                <node name="transform" pkg="differ_robot" type="transform" output="screen"/>
+                <node name="current_pose" pkg="differ_robot" type="current_pose" output="screen"/>
         </group>
 
         <group ns="robot2">
@@ -39,7 +54,40 @@
                 </node>
                 <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
                 <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot2_odom" />
-                <node name="transform" pkg="differ_robot" type="transform" output="screen"/>
+                <node name="current_pose" pkg="differ_robot" type="current_pose" output="screen"/>
+        </group>
+
+        <group ns="robot3">
+                <param name="robot_description" command="$(find xacro)/xacro $(find differ_robot)/urdf/robot_queue.urdf.xacro ns:=robot3" />
+                <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot3 -x $(arg robot3_x_pos) -y $(arg robot3_y_pos) -z $(arg robot3_z_pos) -R 0 -P 0 -Y $(arg robot3_yaw)" output="screen"/>
+                <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+                        <param name="publish_tf" type="bool" value="false" />
+                </node>
+                <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+                <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot3_odom" />
+                <node name="current_pose" pkg="differ_robot" type="current_pose" output="screen"/>
+        </group>
+
+        <group ns="robot4">
+                <param name="robot_description" command="$(find xacro)/xacro $(find differ_robot)/urdf/robot_queue.urdf.xacro ns:=robot4" />
+                <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot4 -x $(arg robot4_x_pos) -y $(arg robot4_y_pos) -z $(arg robot4_z_pos) -R 0 -P 0 -Y $(arg robot4_yaw)" output="screen"/>
+                <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+                        <param name="publish_tf" type="bool" value="false" />
+                </node>
+                <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+                <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot4_odom" />
+                <node name="current_pose" pkg="differ_robot" type="current_pose" output="screen"/>
+        </group>
+
+        <group ns="robot5">
+                <param name="robot_description" command="$(find xacro)/xacro $(find differ_robot)/urdf/robot_queue.urdf.xacro ns:=robot5" />
+                <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot5 -x $(arg robot5_x_pos) -y $(arg robot5_y_pos) -z $(arg robot5_z_pos) -R 0 -P 0 -Y $(arg robot5_yaw)" output="screen"/>
+                <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+                        <param name="publish_tf" type="bool" value="false" />
+                </node>
+                <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+                <node name="static_transform_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 /world /robot5_odom" />
+                <node name="current_pose" pkg="differ_robot" type="current_pose" output="screen"/>
         </group>
 
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find differ_robot)/rviz/queue.rviz" />

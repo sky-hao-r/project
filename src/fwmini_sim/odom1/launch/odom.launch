@@ -1,0 +1,5 @@
+<launch>
+    <param name="x0" type="double" value="505361.17" />
+    <param name="y0" type="double" value="4342758.11" />
+    <param name="z0" type="double" value="-3.534000" />
+</launch>

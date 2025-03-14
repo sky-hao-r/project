@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(differ_robot)
+project(project_truck)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,11 +8,15 @@ project(differ_robot)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
+  actionlib
+  actionlib_msgs
+  message_generation
+  nav_msgs
   roscpp
   rospy
   std_msgs
-  message_generation
+  tf
+  yhs_can_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -51,15 +55,14 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  PoseRPY.msg
+  RobotPose.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  hmh_task.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,7 +74,9 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  actionlib_msgs
   std_msgs
+  #   nav_msgs#   std_msgs#   yhs_can_msgs
 )
 
 ################################################
@@ -104,9 +109,9 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES differ_robot
- CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs message_runtime
+ INCLUDE_DIRS include/${PROJECT_NAME}
+ LIBRARIES project_truck
+ CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -117,25 +122,35 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+include/${PROJECT_NAME}
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/differ_robot.cpp
-# )
+add_library(control_state
+  include/${PROJECT_NAME}/common_control.h
+
+  src/common_control.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(control_state ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(transform src/transform.cpp)
-add_executable(current_pose src/current_pose.cpp)
+add_executable(robot1_control src/robot1_control.cpp)
+add_executable(robot2_control src/robot2_control.cpp)
+add_executable(robot3_control src/robot3_control.cpp)
+add_executable(robot4_control src/robot4_control.cpp)
+add_executable(robot5_control src/robot5_control.cpp)
+
+add_executable(car_test src/car_test.cpp)
+
+
+
 
 
 ## Rename C++ executable without prefix
@@ -149,14 +164,30 @@ add_executable(current_pose src/current_pose.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(transform
+target_link_libraries(robot1_control
   ${catkin_LIBRARIES}
+  control_state
 )
 
-target_link_libraries(current_pose
+target_link_libraries(robot2_control
+  ${catkin_LIBRARIES}
+  control_state
+)
+target_link_libraries(robot3_control
+  ${catkin_LIBRARIES}
+  control_state
+)
+target_link_libraries(robot4_control
+  ${catkin_LIBRARIES}
+  control_state
+)
+target_link_libraries(robot5_control
+  ${catkin_LIBRARIES}
+  control_state
+)
+target_link_libraries(car_test
   ${catkin_LIBRARIES}
 )
-
 
 
 #############
@@ -206,7 +237,7 @@ target_link_libraries(current_pose
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_differ_robot.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_project_truck.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

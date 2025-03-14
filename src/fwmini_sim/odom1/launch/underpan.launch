@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- 参数：CAN 接口名称 -->
+    <param name="can_interface" value="can1" />
+    
+    <!-- 启动 ROS 节点 underpan_node -->
+    <!-- 节点名，包名，可执行程序名 -->
+    <node name="underpan" pkg="odom1" type="underpan" output="screen">
+    </node>
+</launch>
